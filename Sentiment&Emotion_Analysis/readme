@@ -1,0 +1,42 @@
+# FEEL-IT for Eighteenth-Century Gazettes
+
+The script selects records by year from the `years` column and analyses the text in the `transcription` column. All other columns are optional. The start and end years are both included.
+
+## Selecting the year range and analysis mode
+
+The examples assume that `python` points to an environment with the required packages installed. In PowerShell, you can use `.\.venv\Scripts\python.exe` in its place.
+
+| Task | Command |
+| --- | --- |
+| List available years and transcription coverage | `python analisi_feelit.py gazzette.csv --elenca-anni` |
+| Select years interactively | `python analisi_feelit.py gazzette.csv` |
+| Analyse a single year | `python analisi_feelit.py gazzette.csv --da 1758` |
+| Analyse the original text | `python analisi_feelit.py gazzette.csv --da 1756 --a 1763 --modalita originale` |
+| Compare the original and normalised texts | `python analisi_feelit.py gazzette.csv --da 1756 --a 1763 --modalita confronto` |
+| Use a custom lexicon | `python analisi_feelit.py gazzette.csv --da 1756 --a 1763 --lessico mio_lessico.csv --out risultati_mio_lessico` |
+
+The default mode is `storica`. Use `--out` to specify a new output directory and `--help` to list all available options. Setting `--batch-size 4` reduces memory use during inference. Use `--dispositivo cpu` to run the analysis on the CPU even when a CUDA-capable GPU is available.
+
+## Editable lexicon
+
+`lessico_1700.csv` contains an initial set of spelling variants, grammatical forms, and expressions, with a lexicographic reference for each entry. The script reads the `storico` and `moderno` columns. The `tipo` and `riferimento` columns document each rule. Save the file in UTF-8 with `;` as the delimiter. You can add a separate row for each inflected form or spelling variant found in your gazettes.
+
+| Historical form or expression | Model input | Rationale |
+| --- | --- | --- |
+| `giubbilo` | `giubilo` | Spelling variant |
+| `maraviglia` | `meraviglia` | Spelling variant |
+| `niuno` | `nessuno` | Preserves negation |
+| `con gran cordoglio` | `con grande dolore` | Phrase-specific paraphrase |
+| `con viva allegrezza` | `con viva gioia` | Phrase-specific paraphrase |
+
+Rules match whole words or expressions within a single segment. When matches start at the same position, the longest match takes precedence. The output retains the original text and records how many times each rule is applied. For ambiguous forms, use context-specific rules and verify them against the corpus. For example, `allegrezza` can also describe the vividness of colours. [Treccani, “Allegrezza”](https://www.treccani.it/vocabolario/allegrezza/)
+
+## Outputs and methodology
+
+| File | Contents |
+| --- | --- |
+| `risultati_righe.csv` | Original transcription, top-scoring labels, six scores, and substitutions for each row |
+| `risultati_segmenti.csv` | Original and analysed text, labels, scores, and substitutions for each segment |
+| `riepilogo_annuale.csv` | Total rows, analysed rows, and rows with empty transcriptions, plus counts and percentages for each class |
+| `sentiment_per_anno` and `emozione_per_anno` | Charts in SVG and PNG. In `confronto` mode, each chart has one panel per text version |
+| `metadati.json` and `lessico_usato.csv` | Run settings and model versions. Runs with historical normalisation also include a copy of the lexicon used |
